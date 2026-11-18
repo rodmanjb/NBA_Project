@@ -1,3 +1,21 @@
+"""
+Step 4: Train models and see if they beat the baseline.
+
+Setup (once):
+    pip install scikit-learn
+
+Run after build_features.py:
+    python model.py
+
+Uses the SAME time split as baseline.py (first 80% train, last 20% test),
+so the MAE numbers are directly comparable.
+
+Models:
+  1. Linear regression  - your "best equation" idea: PTS = a*x1 + b*x2 + ... + c
+  2. Gradient boosting  - lots of small decision trees; can pick up non-linear stuff
+                          (e.g. back-to-backs only hurting older players)
+"""
+
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import HistGradientBoostingRegressor
@@ -25,11 +43,15 @@ def mae(actual, predicted):
 
 def main():
     df = pd.read_csv(f"{DATA_DIR}/features.csv", parse_dates=["GAME_DATE"])
+    lakers_ids = pd.read_csv(f"{DATA_DIR}/roster.csv")["PLAYER_ID"]
     train, test = time_split(df)
     X_train, X_test = train[FEATURES], test[FEATURES]
-    print(f"Train: {len(train)} games | Test: {len(test)} games\n")
+    is_laker = test["Player_ID"].isin(lakers_ids)
+    print(f"Train: {len(train)} games (whole league) | Test: {len(test)} games "
+          f"({is_laker.sum()} by current Lakers)\n")
 
     results = {}
+    lakers_results = {}
     linear_models = {}
 
     for t in TARGETS:
@@ -47,13 +69,24 @@ def main():
         gb = HistGradientBoostingRegressor(
             max_depth=3, learning_rate=0.05, max_iter=300, random_state=0)
         gb.fit(X_train, y_train)
-        gb_mae = mae(y_test, gb.predict(X_test))
+        gb_pred = gb.predict(X_test)
+        gb_mae = mae(y_test, gb_pred)
 
         results[t] = {"Baseline (L10)": base, "Linear": lin_mae, "Boosting": gb_mae}
 
+        # Same thing, but only scored on Lakers games - the ones we actually care about
+        lin_pred = lin.predict(X_test)
+        lakers_results[t] = {
+            "Baseline (L10)": mae(y_test[is_laker], test.loc[is_laker, f"{t}_L10"]),
+            "Linear": mae(y_test[is_laker], lin_pred[is_laker.values]),
+            "Boosting": mae(y_test[is_laker], gb_pred[is_laker.values]),
+        }
+
     table = pd.DataFrame(results).round(2)
-    print("Test MAE (lower = better)\n")
+    print("Test MAE - whole league (lower = better)\n")
     print(table.to_string())
+    print("\nTest MAE - Lakers games only\n")
+    print(pd.DataFrame(lakers_results).round(2).to_string())
 
     print("\nImprovement over baseline:")
     for t in TARGETS:
