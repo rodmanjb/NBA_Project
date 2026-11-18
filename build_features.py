@@ -39,9 +39,10 @@ def main():
 
 
     #Third - Count associated Rest days
-    games["REST_DAYS"] = by_player["GAME_DATE"].diff().dt.days
-    games["REST_DAYS"] = games["REST_DAYS"].clip(upper=7).fillna(7) #a long break/season opener counts as 7
+    gap = by_player["GAME_DATE"].diff().dt.days
+    games["REST_DAYS"] = gap.clip(upper=3).fillna(3)
     games["B2B"] = (games["REST_DAYS"] == 1).astype(int)
+    games["LONG_BREAK"] = ((gap >= 5) | gap.isna()).astype(int)
 
 
     #Fourth - Factor in opponents strength
@@ -57,7 +58,7 @@ def main():
     id_cols = ["Player_ID", "PLAYER_NAME", "SEASON", "GAME_DATE", "MATCHUP"]
     feature_cols = ([f"{s}_L{w}" for s in STATS for w in WINDOWS]
                     + [f"{s}_SZN" for s in STATS]
-                    + ["HOME", "REST_DAYS", "B2B", "OPP_PACE", "OPP_DEF_RATING"])
+                    + ["HOME", "REST_DAYS", "B2B", "LONG_BREAK", "OPP_PACE", "OPP_DEF_RATING"])
     target_cols = ["PTS", "REB", "AST", "MIN"]
 
     table = games[id_cols + feature_cols + target_cols].dropna()

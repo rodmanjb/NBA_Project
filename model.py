@@ -9,7 +9,7 @@ TEST_FRACTION = 0.2
 FEATURES = (
     [f"{s}_L{w}" for s in ["PTS", "REB", "AST", "MIN"] for w in [5, 10]]
     + [f"{s}_SZN" for s in ["PTS", "REB", "AST", "MIN"]]
-    + ["HOME", "REST_DAYS", "B2B", "OPP_PACE", "OPP_DEF_RATING"]
+    + ["HOME", "REST_DAYS", "B2B", "LONG_BREAK", "OPP_PACE", "OPP_DEF_RATING"]
 )
 
 
