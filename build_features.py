@@ -45,10 +45,27 @@ def main():
 
 
     #Fourth - Factor in opponents strength
+    opp = team_stats[["TEAM_ABBR", "SEASON", "PACE", "DEF_RATING"]].rename(
+        columns={"TEAM_ABBR": "OPP_ABBR", "PACE": "OPP_PACE", "DEF_RATING": "OPP_DEF_RATING"})
+    games = games.merge(opp, on=["OPP_ABBR", "SEASON"], how= "left")
 
 
     #Fifth - Tidy
+    games["PRIOR_GAMES"] = games.groupby("Player_ID").cumcount()
+    games = games[games["PRIOR_GAMES"] >= MIN_PRIOR_GAMES]
 
+    id_cols = ["Player_ID", "PLAYER_NAME", "SEASON", "GAME_DATE", "MATCHUP"]
+    feature_cols = ([f"{s}_L{w}" for s in STATS for w in WINDOWS]
+                    + [f"{s}_SZN" for s in STATS]
+                    + ["HOME", "REST_DAYS", "B2B", "OPP_PACE", "OPP_DEF_RATING"])
+    target_cols = ["PTS", "REB", "AST", "MIN"]
+
+    table = games[id_cols + feature_cols + target_cols].dropna()
+    table.to_csv(f"{DATA_DIR}/features.csv", index=False)
+
+    print(f"Feature table: {len(table)} rows x {len(feature_cols)} features")
+    print(table[["PLAYER_NAME", "GAME_DATE", "PTS_L5", "PTS_L10", "PTS_SZN",
+                 "REST_DAYS", "OPP_DEF_RATING", "PTS"]].tail(8).to_string(index=False))
 
     if __name__ == "__main__":
         main()
