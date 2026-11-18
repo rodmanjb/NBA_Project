@@ -5,8 +5,8 @@ TARGETS = ["PTS", "REB", "AST"]
 TEST_FRAC = 0.2 #to keep the recent 20% to test
 
 def time_split(df, test_frac=TEST_FRAC):
-    cutoff = df["GAME_DATA"].quantile(1-test_frac)
-    return df[df["GAME_DATA"] < cutoff], df[df["GAME_DATA"] >= cutoff], cutoff
+    cutoff = df["GAME_DATE"].quantile(1-test_frac)
+    return df[df["GAME_DATE"] < cutoff], df[df["GAME_DATE"] >= cutoff], cutoff
 
 def mae(actual, pred):
     return (actual - pred).abs().mean()
