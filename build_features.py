@@ -29,17 +29,17 @@ def main():
 
 
     #Second - Season averages
-    by_season = games.groupby(["PLAYER_ID", "SEASON"])
+    by_season = games.groupby(["Player_ID", "SEASON"])
     for stat in STATS:
-        games[f"{stat}_L{w}"] = by_season[stat].transform(
-            lambda s: s.shift(1).expanding.mean())
+        games[f"{stat}_SZN"] = by_season[stat].transform(
+            lambda s: s.shift(1).expanding().mean())
     # first game of a season has no season avg yet -> fall back to last-10
     for stat in STATS:
         games[f"{stat}_SZN"] = games[f"{stat}_SZN"].fillna(games[f"{stat}_L10"])
 
 
     #Third - Count associated Rest days
-    games["REST_DAYS"] = by_player["GAME_DATE"].diff.dt.days
+    games["REST_DAYS"] = by_player["GAME_DATE"].diff().dt.days
     games["REST_DAYS"] = games["REST_DAYS"].clip(upper=7).fillna(7) #a long break/season opener counts as 7
     games["B2B"] = (games["REST_DAYS"] == 1).astype(int)
 
@@ -67,6 +67,6 @@ def main():
     print(table[["PLAYER_NAME", "GAME_DATE", "PTS_L5", "PTS_L10", "PTS_SZN",
                  "REST_DAYS", "OPP_DEF_RATING", "PTS"]].tail(8).to_string(index=False))
 
-    if __name__ == "__main__":
-        main()
+if __name__ == "__main__":
+    main()
 
